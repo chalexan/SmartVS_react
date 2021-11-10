@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://localhost:4430/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page - WebRTC ASP.Net</title>
+    <link rel="stylesheet" href="./Home Page - WebRTC ASP.Net_files/bootstrap.min.css">
+    <link rel="stylesheet" href="./Home Page - WebRTC ASP.Net_files/site.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" href="http://localhost:4430/">WebRTC ASP.Net</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="http://localhost:4430/">Home</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            
+<script type="text/javascript">
+
+    const id = 'afbfba5c-2fe9-4e87-897e-b074d48abe45';
+    const baseUrl = "api/webrtc/";
+    const getOfferUrl = `${baseUrl}getoffer?id=${id}`;
+    const setAnswerUrl = `${baseUrl}setanswer?id=${id}`;
+    const setIceCandidateUrl = `${baseUrl}addicecandidate?id=${id}`
+
+    var pc
+
+    async function start() {
+
+        closePeer();
+
+        let videoControl = document.querySelector('#audioCtl');
+
+        const localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        videoControl.srcObject = localStream;
+
+        pc = new RTCPeerConnection(null);
+
+        localStream.getTracks().forEach(track => {
+            console.log('add local track ' + track.kind + ' to peer connection.');
+            console.log(track);
+            pc.addTrack(track, localStream);
+        });
+
+        pc.onicegatheringstatechange = function () {
+            console.log("onicegatheringstatechange: " + pc.iceGatheringState);
+        }
+
+        pc.oniceconnectionstatechange = function () {
+            console.log("oniceconnectionstatechange: " + pc.iceConnectionState);
+        }
+
+        pc.onsignalingstatechange = function () {
+            console.log("onsignalingstatechange: " + pc.signalingState);
+        }
+
+        pc.onicecandidate = async function (event) {
+            if (event.candidate) {
+                console.log('new-ice-candidate:');
+                console.log(event.candidate.candidate);
+                console.log(event.candidate);
+                await fetch(setIceCandidateUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(event.candidate),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        };
+
+        let offerResponse = await fetch(getOfferUrl);
+        let offer = await offerResponse.json();
+        console.log("got offer: " + offer.type + " " + offer.sdp + ".");
+        await pc.setRemoteDescription(offer);
+
+        pc.createAnswer().then(function (answer) {
+            return pc.setLocalDescription(answer);
+        }).then(async function () {
+            console.log("Sending answer SDP.");
+            console.log("SDP: " + pc.localDescription.sdp);
+            await fetch(setAnswerUrl, {
+                method: 'POST',
+                body: JSON.stringify(pc.localDescription),
+                headers: { 'Content-Type': 'application/json' }
+            });
+        });
+
+    };
+
+    function closePeer() {
+        if (pc != null) {
+            console.log("close peer");
+            pc.close();
+        }
+    };
+
+</script>
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>WebRTC ASP.Net Example with the <a target="_blank" href="https://github.com/sipsorcery/sipsorcery">SIPSorcery WebRTC Library</a>.</p>
+</div>
+
+
+<audio controls="" autoplay="autoplay" id="audioCtl"></audio>
+
+<div>
+    <button type="button" class="btn btn-success" onclick="start();">Start</button>
+    <button type="button" class="btn btn-success" onclick="closePeer();">Close</button>
+</div>
+
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            © 2020 - SIPSorcery -
+        </div>
+    </footer>
+    <script src="./Home Page - WebRTC ASP.Net_files/jquery.min.js"></script>
+    <script src="./Home Page - WebRTC ASP.Net_files/bootstrap.bundle.min.js"></script>
+    <script src="./Home Page - WebRTC ASP.Net_files/site.js"></script>
+    
+
+
+<!----></body></html>
