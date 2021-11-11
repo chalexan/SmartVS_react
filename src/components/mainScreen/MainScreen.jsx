@@ -7,7 +7,8 @@ import {
 
 const MainScreen = () => {
   const [id, setId] = useState(createGuid());
-  const baseUrl = "http://84.201.188.97:1443/";
+  //const baseUrl = "http://84.201.188.97:1443/";
+  const baseUrl = "http://localhost:5000/";
   const getOfferUrl = `${baseUrl}api/webrtc/getoffer?id=${id}`;
   const setAnswerUrl = `${baseUrl}api/webrtc/setanswer?id=${id}`;
   const setIceCandidateUrl = `${baseUrl}api/webrtc/addicecandidate?id=${id}`;
@@ -62,8 +63,7 @@ const MainScreen = () => {
     let offerResponse = await fetch(getOfferUrl);
     let offer = await offerResponse.json();
     console.log("got offer: " + offer.type + " " + offer.sdp + ".");
-    offer["type"] = convertEnumSdpTypes(offer.type);
-
+    
     await pc.setRemoteDescription(offer);
 
     pc.createAnswer()
@@ -76,10 +76,7 @@ const MainScreen = () => {
         console.log("SDP: " + pc.localDescription.sdp);
         await fetch(setAnswerUrl, {
           method: "POST",
-          body: JSON.stringify({
-            type: convertEnumSdpTypesToNumbers(pc.localDescription.type),
-            sdp: pc.localDescription.sdp,
-          }),
+          body: JSON.stringify(pc.localDescription),
           headers: { "Content-Type": "application/json" },
         });
       });
