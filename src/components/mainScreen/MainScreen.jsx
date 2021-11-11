@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Logger, ConsoleLogger } from "react-console-logger";
+
 import {
   createGuid,
   convertEnumSdpTypes,
@@ -12,6 +14,7 @@ const MainScreen = () => {
   const getOfferUrl = `${baseUrl}api/webrtc/getoffer?id=${id}`;
   const setAnswerUrl = `${baseUrl}api/webrtc/setanswer?id=${id}`;
   const setIceCandidateUrl = `${baseUrl}api/webrtc/addicecandidate?id=${id}`;
+  const myLogger = new Logger();
 
   let pc;
 
@@ -30,25 +33,27 @@ const MainScreen = () => {
     pc = new RTCPeerConnection(null);
 
     localStream.getTracks().forEach((track) => {
+      myLogger.log("add local track " + track.kind + " to peer connection.");
       console.log("add local track " + track.kind + " to peer connection.");
+      myLogger.log(track);
       console.log(track);
       pc.addTrack(track, localStream);
     });
 
     pc.onicegatheringstatechange = () =>
-      console.log("onicegatheringstatechange: " + pc.iceGatheringState);
+      myLogger.log("onicegatheringstatechange: " + pc.iceGatheringState);
 
     pc.oniceconnectionstatechange = () =>
-      console.log("oniceconnectionstatechange: " + pc.iceConnectionState);
+      myLogger.log("oniceconnectionstatechange: " + pc.iceConnectionState);
 
     pc.onsignalingstatechange = () =>
-      console.log("onsignalingstatechange: " + pc.signalingState);
+      myLogger.log("onsignalingstatechange: " + pc.signalingState);
 
     pc.onicecandidate = async function (event) {
       if (event.candidate) {
-        console.log("new-ice-candidate:");
-        console.log(event.candidate.candidate);
-        console.log(event.candidate);
+        myLogger.log("new-ice-candidate:");
+        myLogger.log(event.candidate.candidate);
+        myLogger.log(event.candidate);
 
         await fetch(setIceCandidateUrl, {
           method: "POST",
@@ -60,17 +65,19 @@ const MainScreen = () => {
 
     let offerResponse = await fetch(getOfferUrl);
     let offer = await offerResponse.json();
+    myLogger.log("got offer: " + offer.type + " " + offer.sdp + ".");
     console.log("got offer: " + offer.type + " " + offer.sdp + ".");
-
     await pc.setRemoteDescription(offer);
 
     pc.createAnswer()
       .then((answer) => {
-        console.log("cAnswer:", answer);
+        myLogger.log("cAnswer:", answer);
         return pc.setLocalDescription(answer);
       })
       .then(async () => {
-        console.log("Sending answer SDP.-->,", pc.localDescription["type"]);
+        myLogger.log("Sending answer SDP.-->," + pc.localDescription["type"]);
+        console.log("Sending answer SDP.-->," + pc.localDescription["type"]);
+        myLogger.log("SDP: " + pc.localDescription.sdp);
         console.log("SDP: " + pc.localDescription.sdp);
         await fetch(setAnswerUrl, {
           method: "POST",
@@ -82,6 +89,7 @@ const MainScreen = () => {
 
   const closePeer = () => {
     if (pc != null) {
+      myLogger.log("close peer");
       console.log("close peer");
       pc.close();
     }
@@ -116,22 +124,13 @@ const MainScreen = () => {
       <div className="container">
         <main role="main" className="pb-3">
           <div className="text-center">
-            <h1 className="display-4">SmartVW</h1>
-            <p>
-              WebRTC ASP.Net Example with the{" "}
-              <a
-                target="_blank"
-                href="https://github.com/sipsorcery/sipsorcery"
-              >
-                SIPSorcery WebRTC Library
-              </a>
-              .
-            </p>
+            <h1 className="display-4">SmartVS</h1>
           </div>
 
           <audio controls id="audioCtl">
             lala
           </audio>
+          <br />
 
           <div>
             <button
@@ -150,12 +149,17 @@ const MainScreen = () => {
               Close
             </button>
           </div>
+          <div>
+            <br />
+            <ConsoleLogger logger={myLogger} />
+            <br />
+          </div>
         </main>
       </div>
 
-      <footer className="border-top footer text-muted">
+      {/* <footer className="border-top footer text-muted">
         <div className="container">© 2021 - ProgressTerra -</div>
-      </footer>
+      </footer> */}
     </>
   );
 };
