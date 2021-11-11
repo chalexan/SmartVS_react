@@ -6,9 +6,12 @@ import {
 } from "../../lib/func";
 
 const MainScreen = () => {
+  // clientGuid - creates first on every session
   const [id, setId] = useState(createGuid());
-  //const baseUrl = "http://84.201.188.97:1443/";
-  const baseUrl = "http://localhost:5000/";
+
+  const baseUrl = "http://84.201.188.97:1443/";
+  //const baseUrl = "http://localhost:5000/";
+
   const getOfferUrl = `${baseUrl}api/webrtc/getoffer?id=${id}`;
   const setAnswerUrl = `${baseUrl}api/webrtc/setanswer?id=${id}`;
   const setIceCandidateUrl = `${baseUrl}api/webrtc/addicecandidate?id=${id}`;
@@ -24,6 +27,7 @@ const MainScreen = () => {
       video: false,
       audio: true,
     });
+
     videoControl.srcObject = localStream;
 
     pc = new RTCPeerConnection(null);
@@ -34,17 +38,14 @@ const MainScreen = () => {
       pc.addTrack(track, localStream);
     });
 
-    pc.onicegatheringstatechange = function () {
+    pc.onicegatheringstatechange = () =>
       console.log("onicegatheringstatechange: " + pc.iceGatheringState);
-    };
 
-    pc.oniceconnectionstatechange = function () {
+    pc.oniceconnectionstatechange = () =>
       console.log("oniceconnectionstatechange: " + pc.iceConnectionState);
-    };
 
-    pc.onsignalingstatechange = function () {
+    pc.onsignalingstatechange = () =>
       console.log("onsignalingstatechange: " + pc.signalingState);
-    };
 
     pc.onicecandidate = async function (event) {
       if (event.candidate) {
@@ -63,15 +64,15 @@ const MainScreen = () => {
     let offerResponse = await fetch(getOfferUrl);
     let offer = await offerResponse.json();
     console.log("got offer: " + offer.type + " " + offer.sdp + ".");
-    
+
     await pc.setRemoteDescription(offer);
 
     pc.createAnswer()
-      .then(function (answer) {
+      .then((answer) => {
         console.log("cAnswer:", answer);
         return pc.setLocalDescription(answer);
       })
-      .then(async function () {
+      .then(async () => {
         console.log("Sending answer SDP.-->,", pc.localDescription["type"]);
         console.log("SDP: " + pc.localDescription.sdp);
         await fetch(setAnswerUrl, {
@@ -82,12 +83,12 @@ const MainScreen = () => {
       });
   };
 
-  function closePeer() {
+  const closePeer = () => {
     if (pc != null) {
       console.log("close peer");
       pc.close();
     }
-  }
+  };
   return (
     <>
       <header>
@@ -133,7 +134,9 @@ const MainScreen = () => {
             </p>
           </div>
 
-          <audio controls="" autoplay="autoplay" id="audioCtl"></audio>
+          <audio controls autoplay="autoplay" id="audioCtl">
+            lala
+          </audio>
 
           <div>
             <button
