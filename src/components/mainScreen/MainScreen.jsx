@@ -6,12 +6,9 @@ import {
 } from "../../lib/func";
 
 const MainScreen = () => {
-  // clientGuid - creates first on every session
   const [id, setId] = useState(createGuid());
-
   const baseUrl = "http://84.201.188.97:1443/";
   //const baseUrl = "http://localhost:5000/";
-
   const getOfferUrl = `${baseUrl}api/webrtc/getoffer?id=${id}`;
   const setAnswerUrl = `${baseUrl}api/webrtc/setanswer?id=${id}`;
   const setIceCandidateUrl = `${baseUrl}api/webrtc/addicecandidate?id=${id}`;
@@ -92,13 +89,13 @@ const MainScreen = () => {
   return (
     <>
       <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-          <div class="container">
-            <a class="navbar-brand" href="">
+        <nav className="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+          <div className="container">
+            <a className="navbar-brand" href="">
               ProgressTerra
             </a>
             <button
-              class="navbar-toggler"
+              className="navbar-toggler"
               type="button"
               data-toggle="collapse"
               data-target=".navbar-collapse"
@@ -106,22 +103,20 @@ const MainScreen = () => {
               aria-expanded="false"
               aria-label="Toggle navigation"
             >
-              <span class="navbar-toggler-icon"></span>
+              <span className="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
-              <ul class="navbar-nav flex-grow-1">
-                <li class="nav-item"></li>
+            <div className="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+              <ul className="navbar-nav flex-grow-1">
+                <li className="nav-item"></li>
               </ul>
             </div>
           </div>
         </nav>
       </header>
-      <div class="container">
-        <main role="main" class="pb-3">
-          <script type="text/javascript">{/* Скрипт перенесен выше */}</script>
-
-          <div class="text-center">
-            <h1 class="display-4">SmartVW</h1>
+      <div className="container">
+        <main role="main" className="pb-3">
+          <div className="text-center">
+            <h1 className="display-4">SmartVW</h1>
             <p>
               WebRTC ASP.Net Example with the{" "}
               <a
@@ -134,14 +129,14 @@ const MainScreen = () => {
             </p>
           </div>
 
-          <audio controls autoplay="autoplay" id="audioCtl">
+          <audio controls id="audioCtl">
             lala
           </audio>
 
           <div>
             <button
               type="button"
-              class="btn btn-success"
+              className="btn btn-success"
               onClick={() => start()}
             >
               Start
@@ -149,7 +144,7 @@ const MainScreen = () => {
             <span> </span>
             <button
               type="button"
-              class="btn btn-success"
+              className="btn btn-success"
               onClick={() => closePeer()}
             >
               Close
@@ -158,12 +153,9 @@ const MainScreen = () => {
         </main>
       </div>
 
-      <footer class="border-top footer text-muted">
-        <div class="container">© 2021 - ProgressTerra -</div>
+      <footer className="border-top footer text-muted">
+        <div className="container">© 2021 - ProgressTerra -</div>
       </footer>
-      <script src="./Home Page - WebRTC ASP.Net_files/jquery.min.js"></script>
-      <script src="./Home Page - WebRTC ASP.Net_files/bootstrap.bundle.min.js"></script>
-      <script src="./Home Page - WebRTC ASP.Net_files/site.js"></script>
     </>
   );
 };
