@@ -21,10 +21,10 @@ const MainScreen = () => {
   const start = async () => {
     closePeer();
 
-    let videoControl = document.querySelector("#audioCtl");
+    let videoControl = document.querySelector("#videoCtl");
 
     const localStream = await navigator.mediaDevices.getUserMedia({
-      video: false,
+      video: true,
       audio: true,
     });
 
@@ -127,9 +127,9 @@ const MainScreen = () => {
             <h1 className="display-4">SmartVS</h1>
           </div>
 
-          <audio controls id="audioCtl">
+          <video controls id="videoCtl" autoPlay={true}>
             lala
-          </audio>
+          </video>
           <br />
 
           <div>
