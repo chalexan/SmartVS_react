@@ -8,93 +8,61 @@ import {
   convertEnumSdpTypesToNumbers,
 } from "../../lib/func";
 
-const MainScreen = () => {
+const InputStream = () => {
   const [id, setId] = useState(createGuid());
+  const STUN_URL = "stun:stun.sipsorcery.com";
+  const WEBSOCKET_URL = "ws://127.0.0.1:8081/";
   const baseUrl = "http://84.201.188.97:1443/";
   //const baseUrl = "http://localhost:5000/";
   const getOfferUrl = `${baseUrl}api/webrtc/getoffer?id=${id}`;
   const setAnswerUrl = `${baseUrl}api/webrtc/setanswer?id=${id}`;
   const setIceCandidateUrl = `${baseUrl}api/webrtc/addicecandidate?id=${id}`;
+
   const myLogger = new Logger();
   const history = useHistory();
-  let pc;
 
-  const start = async () => {
-    closePeer();
+  let pc, ws;
 
-    let videoControl = document.querySelector("#videoCtl");
+  async function start() {
+    pc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URL }] });
 
-    const localStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    pc.ontrack = (evt) =>
+      (document.querySelector("#videoCtl").srcObject = evt.streams[0]);
+    pc.onicecandidate = (evt) =>
+      evt.candidate && ws.send(JSON.stringify(evt.candidate));
 
-    videoControl.srcObject = localStream;
-
-    pc = new RTCPeerConnection(null);
-
-    localStream.getTracks().forEach((track) => {
-      myLogger.log("add local track " + track.kind + " to peer connection.");
-      console.log("add local track " + track.kind + " to peer connection.");
-      myLogger.log(track);
-      console.log(track);
-      pc.addTrack(track, localStream);
-    });
-
+    // Diagnostics.
     pc.onicegatheringstatechange = () =>
-      myLogger.log("onicegatheringstatechange: " + pc.iceGatheringState);
-
+      console.log("onicegatheringstatechange: " + pc.iceGatheringState);
     pc.oniceconnectionstatechange = () =>
-      myLogger.log("oniceconnectionstatechange: " + pc.iceConnectionState);
-
+      console.log("oniceconnectionstatechange: " + pc.iceConnectionState);
     pc.onsignalingstatechange = () =>
-      myLogger.log("onsignalingstatechange: " + pc.signalingState);
+      console.log("onsignalingstatechange: " + pc.signalingState);
+    pc.onconnectionstatechange = () =>
+      console.log("onconnectionstatechange: " + pc.connectionState);
 
-    pc.onicecandidate = async function (event) {
-      if (event.candidate) {
-        myLogger.log("new-ice-candidate:");
-        myLogger.log(event.candidate.candidate);
-        myLogger.log(event.candidate);
-
-        await fetch(setIceCandidateUrl, {
-          method: "POST",
-          body: JSON.stringify(event.candidate),
-          headers: { "Content-Type": "application/json" },
-        });
+    ws = new WebSocket(WEBSOCKET_URL, []);
+    ws.onmessage = async function (evt) {
+      if (/^[\{"'\s]*candidate/.test(evt.data)) {
+        pc.addIceCandidate(JSON.parse(evt.data));
+      } else {
+        await pc.setRemoteDescription(
+          new RTCSessionDescription(JSON.parse(evt.data))
+        );
+        pc.createAnswer()
+          .then((answer) => pc.setLocalDescription(answer))
+          .then(() => ws.send(JSON.stringify(pc.localDescription)));
       }
     };
+  }
 
-    let offerResponse = await fetch(getOfferUrl);
-    let offer = await offerResponse.json();
-    myLogger.log("got offer: " + offer.type + " " + offer.sdp + ".");
-    console.log("got offer: " + offer.type + " " + offer.sdp + ".");
-    await pc.setRemoteDescription(offer);
-
-    pc.createAnswer()
-      .then((answer) => {
-        myLogger.log("cAnswer:", answer);
-        return pc.setLocalDescription(answer);
-      })
-      .then(async () => {
-        myLogger.log("Sending answer SDP.-->," + pc.localDescription["type"]);
-        console.log("Sending answer SDP.-->," + pc.localDescription["type"]);
-        myLogger.log("SDP: " + pc.localDescription.sdp);
-        console.log("SDP: " + pc.localDescription.sdp);
-        await fetch(setAnswerUrl, {
-          method: "POST",
-          body: JSON.stringify(pc.localDescription),
-          headers: { "Content-Type": "application/json" },
-        });
-      });
-  };
-
-  const closePeer = () => {
+  async function closePeer() {
     if (pc != null) {
-      myLogger.log("close peer");
-      console.log("close peer");
-      pc.close();
+      await pc.close();
+      await ws.close();
     }
-  };
+  }
+
   return (
     <>
       <header>
@@ -125,7 +93,7 @@ const MainScreen = () => {
       <div className="container">
         <main role="main" className="pb-3">
           <div className="text-center">
-            <h1 className="display-4">SmartVS - OutputStream</h1>
+            <h1 className="display-4">SmartVS - InputStream</h1>
           </div>
 
           <video controls id="videoCtl" autoPlay={true}>
@@ -153,9 +121,9 @@ const MainScreen = () => {
             <button
               type="button"
               className="btn btn-success"
-              onClick={() => history.push("/inputData")}
+              onClick={() => history.push("/")}
             >
-              InputStream
+              OutputStream
             </button>
           </div>
           <div>
@@ -167,10 +135,10 @@ const MainScreen = () => {
       </div>
 
       {/* <footer className="border-top footer text-muted">
-        <div className="container">© 2021 - ProgressTerra -</div>
-      </footer> */}
+            <div className="container">© 2021 - ProgressTerra -</div>
+          </footer> */}
     </>
   );
 };
 
-export default MainScreen;
+export default InputStream;
